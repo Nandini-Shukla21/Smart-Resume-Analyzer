@@ -1,0 +1,2 @@
+# Smart-Resume-Analyzer
+The Smart Resume Analyzer is an AI-powered application that automates resume screening for recruiters and HRs. Instead of manually going through hundreds of resumes, the system extracts key details such as skills, education, and experience, and classifies whether a candidate is a good fit for a given job role. The processed resumes and predictions are stored in a PostgreSQL database, and a React-based dashboard allows HR managers to search, filter, and review candidates efficiently.
