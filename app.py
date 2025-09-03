@@ -1,111 +1,101 @@
-import streamlit as st
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import uuid
 import joblib
-import docx2txt
-import PyPDF2
-import re
-import psycopg2
 
-# ======================
-# Load Model & Vectorizer
-# ======================
+app = Flask(__name__)
+CORS(app)
+
+# Load ML model and vectorizer
 model = joblib.load("resume_svm_model.pkl")
 vectorizer = joblib.load("resume_vectorizer.pkl")
 
-# ======================
-# DB Connection Function
-# ======================
-def insert_into_db(resume_text, skills, education, experience, predicted_role, fit_status):
+# In-memory store (can replace with DB later)
+resume_store = {}
+
+@app.route('/analyze', methods=['POST'])
+def analyze_resume():
+    file = request.files.get('resume')
+    job_description = request.form.get('job_description')
+
+    if not file:
+        return jsonify({"error": "No resume file uploaded"}), 400
+
+    # For now: assume text file (later replace with PDF/DOCX parser)
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="resume_db",
-            user="postgres",
-            password="riya,123"
-        )
-        cur = conn.cursor()
+        resume_text = file.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return jsonify({"error": "Failed to read resume"}), 400
 
-        cur.execute("""
-            INSERT INTO resumes (resume_text, skills, education, experience, predicted_role, fit_status)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (resume_text, ','.join(skills), ','.join(education), str(experience), predicted_role, fit_status))
-
-        conn.commit()
-        cur.close()
-        conn.close()
-    except Exception as e:
-        st.error(f"Database Error: {e}")
-
-# ======================
-# Resume Parsing Helpers
-# ======================
-def extract_text_from_pdf(file):
-    text = ""
-    reader = PyPDF2.PdfReader(file)
-    for page in reader.pages:
-        text += page.extract_text()
-    return text
-
-def extract_text_from_docx(file):
-    return docx2txt.process(file)
-
-def extract_skills(text):
-    skills = ["python", "java", "sql", "c++", "machine learning", "deep learning",
-              "excel", "aws", "django", "flask", "html", "css", "javascript"]
-    found = [s for s in skills if s.lower() in text.lower()]
-    return list(set(found))
-
-def extract_education(text):
-    education_keywords = ["bachelor", "master", "btech", "mtech", "phd", "mba", "b.sc", "m.sc"]
-    matches = [edu for edu in education_keywords if re.search(edu, text.lower())]
-    return matches
-
-def extract_experience(text):
-    exp_match = re.findall(r'(\d+)\+?\s*(years|year)', text.lower())
-    return exp_match if exp_match else ["Not Mentioned"]
-
-def classify_resume(resume_text, job_role):
+    # Transform resume text and predict
     X = vectorizer.transform([resume_text])
-    predicted_role = model.predict(X)[0]
-    fit_status = "Good Fit" if predicted_role.lower() == job_role.lower() else "Not Fit"
-    return predicted_role, fit_status
+    prediction = model.predict(X)[0]
 
-# ======================
-# Streamlit App
-# ======================
-st.title("📄 Smart Resume Analyzer with PostgreSQL")
+    resume_id = str(uuid.uuid4())
+    resume_store[resume_id] = {
+        "resume_text": resume_text,
+        "ats_score": 82,
+        "grammar_score": 90,
+        "prediction": int(prediction),
+        "job_description": job_description
+    }
 
-job_role = st.selectbox("Select Job Role", ["HR", "Data Scientist", "Software Engineer", "Web Developer", "Java Developer", "Python Developer"])
+    return jsonify({"resume_id": resume_id, "prediction": int(prediction)})
 
-uploaded_file = st.file_uploader("Upload Resume (PDF or DOCX)", type=["pdf", "docx"])
+@app.route('/score/<resume_id>', methods=['GET'])
+def get_resume_score(resume_id):
+    data = resume_store.get(resume_id)
+    if not data:
+        return jsonify({"error": "Resume not found"}), 404
+    return jsonify({
+        "ats_score": data["ats_score"],
+        "grammar_score": data["grammar_score"],
+        "overall_score": (data["ats_score"] + data["grammar_score"]) // 2
+    })
 
-if uploaded_file is not None:
-    # Extract Text
-    if uploaded_file.type == "application/pdf":
-        resume_text = extract_text_from_pdf(uploaded_file)
-    else:
-        resume_text = extract_text_from_docx(uploaded_file)
+@app.route('/keywords/<resume_id>', methods=['GET'])
+def get_keywords(resume_id):
+    job_desc = request.args.get("job_description", "")
+    data = resume_store.get(resume_id)
+    if not data:
+        return jsonify({"error": "Resume not found"}), 404
+    
+    return jsonify({
+        "matched": ["Python", "React"],
+        "missing": ["AWS", "Docker"],
+        "job_description": job_desc
+    })
 
-    if resume_text:
-        st.subheader("Extracted Resume Text")
-        st.text_area("Resume Content", resume_text[:2000], height=200)
+@app.route('/grammar/<resume_id>', methods=['GET'])
+def get_grammar(resume_id):
+    data = resume_store.get(resume_id)
+    if not data:
+        return jsonify({"error": "Resume not found"}), 404
+    
+    return jsonify({
+        "score": data["grammar_score"],
+        "suggestions": [
+            {"text": "Change 'recieve' to 'receive'"},
+            {"text": "Add comma after introductory phrase"}
+        ]
+    })
 
-        # Extract details
-        skills = extract_skills(resume_text)
-        education = extract_education(resume_text)
-        experience = extract_experience(resume_text)
+@app.route('/compare/<resume_id>', methods=['POST'])
+def compare_resume(resume_id):
+    job_desc = request.json.get("job_description", "")
+    data = resume_store.get(resume_id)
+    if not data:
+        return jsonify({"error": "Resume not found"}), 404
+    
+    return jsonify({
+        "resume_id": resume_id,
+        "job_description": job_desc,
+        "match_percentage": 78
+    })
 
-        # Predict Fit
-        predicted_role, fit_status = classify_resume(resume_text, job_role)
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "Backend is running 🚀"})
 
-        # Show Results
-        st.subheader("🔍 Analysis Results")
-        st.write("**Extracted Skills:**", ", ".join(skills) if skills else "Not Found")
-        st.write("**Education:**", ", ".join(education) if education else "Not Found")
-        st.write("**Experience:**", experience)
-        st.write("**Predicted Role:**", predicted_role)
-        st.write("**Fit Status:**", fit_status)
-
-        # Save to DB
-        if st.button("Save to Database"):
-            insert_into_db(resume_text, skills, education, experience, predicted_role, fit_status)
-            st.success("✅ Resume saved to database!")
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
