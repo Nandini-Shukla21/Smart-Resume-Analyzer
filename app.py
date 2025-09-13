@@ -68,7 +68,7 @@ def analyze_resume():
 
     # ML prediction
     X = vectorizer.transform([resume_text])
-    prediction = model.predict(X)[0]
+    prediction = model.predict(X)[0]  # string label (e.g., "DIGITAL-MEDIA")
 
     # Keyword matching
     resume_keywords = extract_keywords(resume_text)
@@ -80,14 +80,14 @@ def analyze_resume():
     resume_id = str(uuid.uuid4())
     resume_store[resume_id] = {
         "resume_text": resume_text,
-        "prediction": int(prediction),
+        "prediction": prediction,   # ✅ keep string instead of int
         "job_description": job_description,
         "resume_keywords": list(resume_keywords),
         "matched_keywords": matched,
         "missing_keywords": missing
     }
 
-    return jsonify({"resume_id": resume_id, "prediction": int(prediction)})
+    return jsonify({"resume_id": resume_id, "prediction": prediction})
 
 @app.route('/score/<resume_id>', methods=['GET'])
 def get_resume_score(resume_id):
