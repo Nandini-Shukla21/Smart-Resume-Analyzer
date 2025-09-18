@@ -19,6 +19,9 @@ vectorizer = joblib.load("resume_vectorizer.pkl")
 with open("job_keywords.json", "r") as f:
     JOB_KEYWORDS = json.load(f)
 
+# Build lowercase lookup for job roles
+VALID_ROLES = {role.lower(): role for role in JOB_KEYWORDS.keys()}
+
 # In-memory store
 resume_store = {}
 
@@ -61,12 +64,18 @@ def extract_keywords(text):
 @app.route('/analyze', methods=['POST'])
 def analyze_resume():
     file = request.files.get('resume')
-    job_role = request.form.get('job_role', "")
+    job_role = request.form.get('job_role', "").strip()
 
     if not file:
         return jsonify({"error": "No resume file uploaded"}), 400
-    if not job_role or job_role not in JOB_KEYWORDS:
-        return jsonify({"error": "Invalid or missing job role"}), 400
+    if job_role.lower() not in VALID_ROLES:
+        return jsonify({
+            "error": f"Invalid job role: {job_role}",
+            "available_roles": list(JOB_KEYWORDS.keys())
+        }), 400
+
+    # Normalize to proper casing
+    job_role = VALID_ROLES[job_role.lower()]
 
     try:
         resume_text = extract_text_from_file(file)
@@ -82,7 +91,7 @@ def analyze_resume():
 
     # Keyword matching (resume vs job role keywords)
     resume_keywords = extract_keywords(resume_text)
-    job_keywords = set(JOB_KEYWORDS[job_role])
+    job_keywords = set(word.lower() for word in JOB_KEYWORDS[job_role])
 
     matched = list(resume_keywords & job_keywords)
     missing = list(job_keywords - resume_keywords)
@@ -119,9 +128,9 @@ def get_resume_score(resume_id):
     if not data:
         return jsonify({"error": "Resume not found"}), 404
 
-    total_keywords = len(data["resume_keywords"])
     matched = len(data["matched_keywords"])
-    ats_score = int((matched / (len(data["missing_keywords"]) + matched + 1)) * 100)
+    total_keywords = matched + len(data["missing_keywords"])
+    ats_score = int((matched / (total_keywords + 1)) * 100)
 
     grammar_score = data.get("grammar_score", 90)
     overall_score = (ats_score + grammar_score) // 2
@@ -171,14 +180,21 @@ def get_grammar(resume_id):
 
 @app.route('/compare/<resume_id>', methods=['POST'])
 def compare_resume(resume_id):
-    job_role = request.json.get("job_role", "")
+    job_role = request.json.get("job_role", "").strip()
     data = resume_store.get(resume_id)
+
     if not data:
         return jsonify({"error": "Resume not found"}), 404
-    if not job_role or job_role not in JOB_KEYWORDS:
-        return jsonify({"error": "Invalid or missing job role"}), 400
+    if job_role.lower() not in VALID_ROLES:
+        return jsonify({
+            "error": f"Invalid job role: {job_role}",
+            "available_roles": list(JOB_KEYWORDS.keys())
+        }), 400
 
-    jd_keywords = set(JOB_KEYWORDS[job_role])
+    # Normalize to proper casing
+    job_role = VALID_ROLES[job_role.lower()]
+
+    jd_keywords = set(word.lower() for word in JOB_KEYWORDS[job_role])
     match_percentage = int((len(jd_keywords & set(data["resume_keywords"])) / (len(jd_keywords) + 1)) * 100)
 
     return jsonify({
