@@ -39,23 +39,32 @@ class ApiService {
   }
 
   // ✅ Upload and analyze resume
-  async analyzeResume(file, jobRole = null) {
-    const formData = new FormData();
-    formData.append("resume", file);
-    if (jobRole) formData.append("job_role", jobRole); // FIXED → matches backend
+ async analyzeResume(file, jobRole = null) {
+  const formData = new FormData();
+  formData.append("resume", file);
+  if (jobRole) formData.append("job_role", jobRole);
 
-    try {
-      const response = await fetch(`${this.baseURL}/analyze`, {
-        method: "POST",
-        body: formData, // don't set Content-Type manually
-      });
-      if (!response.ok) throw new Error(`Analysis failed: ${response.status}`);
-      return await response.json();
-    } catch (error) {
-      console.error("Analyze failed:", error);
-      throw error;
+  try {
+    const response = await fetch(`${this.baseURL}/analyze`, {
+      method: "POST",
+      body: formData,
+    });
+
+    // DEBUG: log raw text
+    const text = await response.text();
+    console.log("Backend /analyze response:", text);
+
+    if (!response.ok) {
+      throw new Error(`Analysis failed: ${response.status} - ${text}`);
     }
+
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Analyze failed:", error);
+    throw error;
   }
+}
+
 
   // ✅ Get resume scoring breakdown
   async getResumeScore(resumeId) {
