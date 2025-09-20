@@ -9,10 +9,8 @@ import { Footer } from "@/components/ui/footer";
 import { Brain, Zap, Target, FileSearch } from "lucide-react";
 import apiService from "@/services/api";
 
-// ✅ import job_keywords.json
+// ✅ import job_roles list
 import jobKeywords from "../../../job_keywords.json";
-
-
 
 const Home = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,20 +23,17 @@ const Home = () => {
       return;
     }
 
-    // ✅ get full keyword list for selected role
-    const jobDescription = jobKeywords[jobRole]?.join(" ") || jobRole;
-
     setIsAnalyzing(true);
 
     try {
-      // ✅ send resume + jobDescription (keywords) to backend
-      const analyzeRes = await apiService.analyzeResume(file, jobDescription);
+      // ✅ Send only role name
+      const analyzeRes = await apiService.analyzeResume(file, jobRole);
       const resumeId = analyzeRes.resume_id;
 
       // ✅ Fetch extra details in parallel
       const [scoreData, keywordData, grammarData] = await Promise.all([
         apiService.getResumeScore(resumeId),
-        apiService.getKeywordAnalysis(resumeId, jobDescription),
+        apiService.getKeywordAnalysis(resumeId, jobRole), // pass role name
         apiService.getGrammarAnalysis(resumeId),
       ]);
 
