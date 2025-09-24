@@ -59,9 +59,9 @@ except Exception:
 # --------------------------
 def get_db_connection():
     return psycopg2.connect(
-        dbname="my_db",
-        user="your_user",
-        password="riya,123",
+        dbname="my_db",        
+        user="postgres",    
+        password="riya,123",  
         host="localhost",
         port="5432",
         cursor_factory=RealDictCursor
@@ -168,7 +168,7 @@ def analyze_resume():
     matched = sorted(list(resume_keywords & job_keywords))
     missing = sorted(list(job_keywords - resume_keywords))
 
-    # Grammar
+    # Grammar (safe fallback)
     grammar_suggestions = []
     grammar_score = 90
     if ginger_available and ginger:
@@ -181,8 +181,10 @@ def analyze_resume():
                     "suggestion": c.get("correct", "")
                 })
             grammar_score = max(50, 100 - len(grammar_suggestions) * 2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Grammar check skipped: %s", e)
+            grammar_suggestions = []
+            grammar_score = 90
 
     # Save to Postgres
     resume_id = str(uuid.uuid4())
@@ -194,25 +196,23 @@ def analyze_resume():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-    INSERT INTO resumes 
-    (resume_id, name, job_role, skills, ats_score, grammar_score, qualifications, resume_text, prediction)
-    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-    ON CONFLICT (resume_id) DO NOTHING
-""", (
-    resume_id,
-    name,
-    canonical_role,
-    ",".join(matched),   # store as CSV string
-    ats_score,
-    grammar_score,
-    qualifications,
-    resume_text,
-    prediction
-))
-
+            INSERT INTO resumes 
+            (resume_id, name, job_role, skills, ats_score, grammar_score, qualifications, resume_text, prediction)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (resume_id) DO NOTHING
+        """, (
+            resume_id,
+            name,
+            canonical_role,
+            ",".join(matched),   # store skills as CSV string
+            ats_score,
+            grammar_score,
+            qualifications,
+            resume_text,
+            prediction
+        ))
         conn.commit()
         logger.info("Saved resume_id=%s to Postgres", resume_id)
-
         cur.close()
         conn.close()
     except Exception as e:
@@ -277,7 +277,8 @@ def get_grammar(resume_id):
         conn.close()
         if not row:
             return jsonify({"error": "Resume not found"}), 404
-        return jsonify({"score": row["grammar_score"], "suggestions": []})
+        return jsonify({"grammar_score": row["grammar_score"], "suggestions": []})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
