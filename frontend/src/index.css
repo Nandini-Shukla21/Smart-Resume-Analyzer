@@ -1,0 +1,402 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AI Resume Analyzer Design System - Inspired by modern tech UIs
+All colors MUST be HSL. Dark mode like Skitbit, Light mode like Wavelength, Dashboard like Nexus OS.
+*/
+
+@layer base {
+  :root {
+    /* Translucent Header - Same for both themes */
+    --header-bg: hsl(220 30% 10% / 0.3);
+    --header-border: hsl(220 40% 30% / 0.2);
+  }
+
+  .dark {
+    /* Dark Mode - Skitbit inspired (Deep purple/black with green accents) */
+    --background: 270 100% 2%;
+    --foreground: 0 0% 95%;
+
+    /* Glassmorphism Cards */
+    --card: 270 30% 8%;
+    --card-foreground: 0 0% 92%;
+    --glass: 270 40% 10%;
+    --glass-border: 270 30% 20%;
+
+    /* Interactive Elements */
+    --popover: 270 25% 6%;
+    --popover-foreground: 0 0% 92%;
+
+    /* Brand Colors - Purple/Green theme like Skitbit */
+    --primary: 270 100% 70%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 270 100% 80%;
+
+    /* Accent Colors - Green highlights */
+    --secondary: 120 100% 50%;
+    --secondary-foreground: 270 100% 5%;
+    --accent: 300 100% 60%;
+    --accent-foreground: 0 0% 98%;
+
+    /* Dashboard specific - Nexus OS inspired (Dark blue/teal) */
+    --dashboard-bg: 210 60% 5%;
+    --dashboard-card: 210 40% 8%;
+    --dashboard-primary: 180 100% 50%;
+    --dashboard-accent: 190 100% 60%;
+
+    /* Status Colors */
+    --success: 120 100% 50%;
+    --success-foreground: 0 0% 98%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 270 100% 5%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Neutral Tones */
+    --muted: 270 20% 15%;
+    --muted-foreground: 270 10% 60%;
+    --border: 270 30% 18%;
+    --input: 270 25% 12%;
+    --ring: 270 100% 70%;
+
+    /* Design System Variables */
+    --radius: 1rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(270 100% 70% / 0.8), hsl(300 100% 60% / 0.6));
+    --gradient-secondary: linear-gradient(135deg, hsl(120 100% 50% / 0.7), hsl(180 100% 50% / 0.5));
+    --gradient-background: linear-gradient(135deg, hsl(270 100% 2%), hsl(280 60% 8%));
+    --gradient-dashboard: linear-gradient(135deg, hsl(210 60% 5%), hsl(220 50% 8%));
+    
+    /* Glassmorphism Effects */
+    --glass-bg: hsl(270 40% 10% / 0.4);
+    --glass-border: hsl(270 30% 20% / 0.3);
+    --glass-shadow: 0 8px 32px hsl(270 100% 70% / 0.15);
+    --glass-shadow-lg: 0 20px 60px hsl(270 100% 70% / 0.2);
+
+    /* Sidebar */
+    --sidebar-background: 270 25% 6%;
+    --sidebar-foreground: 0 0% 92%;
+    --sidebar-primary: 270 100% 70%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 270 20% 15%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 270 30% 18%;
+    --sidebar-ring: 270 100% 70%;
+  }
+
+  /* Light mode theme - Wavelength inspired (Purple/blue gradients) */
+  :root:not(.dark) {
+    --background: 240 100% 98%;
+    --foreground: 270 15% 15%;
+    --card: 255 100% 100%;
+    --card-foreground: 270 15% 15%;
+    --glass: 255 100% 100%;
+    --glass-border: 240 30% 90%;
+    --popover: 240 50% 96%;
+    --popover-foreground: 270 15% 15%;
+    
+    /* Brand Colors - Blue/Purple gradients */
+    --primary: 250 100% 65%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 250 100% 75%;
+    --secondary: 280 60% 70%;
+    --secondary-foreground: 0 0% 98%;
+    --accent: 200 100% 60%;
+    --accent-foreground: 0 0% 98%;
+    
+    /* Dashboard - Keep dark theme for dashboard even in light mode */
+    --dashboard-bg: 210 60% 5%;
+    --dashboard-card: 210 40% 8%;
+    --dashboard-primary: 180 100% 50%;
+    --dashboard-accent: 190 100% 60%;
+    
+    /* Status Colors */
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 98%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 270 15% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    /* Neutral Tones */
+    --muted: 240 20% 90%;
+    --muted-foreground: 240 10% 50%;
+    --border: 240 20% 85%;
+    --input: 240 20% 90%;
+    --ring: 250 100% 65%;
+    
+    /* Gradients - Light purple/blue theme */
+    --gradient-primary: linear-gradient(135deg, hsl(250 100% 65% / 0.8), hsl(280 60% 70% / 0.6));
+    --gradient-secondary: linear-gradient(135deg, hsl(200 100% 60% / 0.7), hsl(250 100% 65% / 0.5));
+    --gradient-background: linear-gradient(135deg, hsl(240 100% 98%), hsl(250 60% 95%));
+    --gradient-dashboard: linear-gradient(135deg, hsl(210 60% 5%), hsl(220 50% 8%));
+    
+    /* Glassmorphism Effects */
+    --glass-bg: hsl(255 100% 100% / 0.6);
+    --glass-border: hsl(240 30% 90% / 0.5);
+    --glass-shadow: 0 8px 32px hsl(250 100% 65% / 0.1);
+    --glass-shadow-lg: 0 20px 60px hsl(250 100% 65% / 0.15);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background: var(--gradient-background);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Animated Background Elements */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 25% 25%, hsl(var(--primary) / 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 75% 75%, hsl(var(--accent) / 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 10%, hsl(var(--secondary) / 0.06) 0%, transparent 50%);
+    animation: backgroundMove 20s ease-in-out infinite;
+    z-index: -1;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      linear-gradient(45deg, transparent 48%, hsl(var(--primary) / 0.03) 50%, transparent 52%),
+      linear-gradient(-45deg, transparent 48%, hsl(var(--accent) / 0.02) 50%, transparent 52%);
+    animation: patternMove 15s linear infinite;
+    z-index: -1;
+  }
+
+  @keyframes backgroundMove {
+    0%, 100% {
+      transform: translate(-10px, -10px) rotate(0deg);
+    }
+    33% {
+      transform: translate(10px, -20px) rotate(120deg);
+    }
+    66% {
+      transform: translate(-20px, 10px) rotate(240deg);
+    }
+  }
+
+  @keyframes patternMove {
+    0% {
+      background-position: 0% 0%, 0% 0%;
+    }
+    100% {
+      background-position: 100% 100%, -100% -100%;
+    }
+  }
+}
+
+@layer components {
+  /* Glassmorphism Card Component */
+  .glass-card {
+    @apply backdrop-blur-xl bg-glass border border-glass-border rounded-2xl;
+    box-shadow: var(--glass-shadow);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--glass-shadow-lg);
+  }
+
+  .glass-card-lg {
+    @apply backdrop-blur-xl bg-glass border border-glass-border rounded-3xl;
+    box-shadow: var(--glass-shadow-lg);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card-lg:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 25px 80px hsl(var(--primary) / 0.25);
+  }
+
+  /* Glass Button Variants */
+  .btn-glass {
+    @apply backdrop-blur-md bg-glass border border-glass-border rounded-xl px-6 py-3;
+    @apply hover:bg-primary/20 transition-all duration-300;
+    box-shadow: var(--glass-shadow);
+  }
+
+  .btn-gradient {
+    background: var(--gradient-primary);
+    @apply border-0 rounded-xl px-6 py-3 text-primary-foreground font-medium;
+    @apply hover:scale-105 transition-all duration-300;
+    box-shadow: var(--glass-shadow-lg);
+  }
+
+  /* Progress Ring Animations */
+  .progress-ring {
+    @apply transition-all duration-700 ease-out;
+  }
+
+  /* Floating Animation */
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Pulse Glow Effect */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+    50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.6); }
+  }
+
+  /* Floating particles animation */
+  .floating-particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: hsl(var(--primary) / 0.3);
+    border-radius: 50%;
+    animation: floatParticle 20s linear infinite;
+  }
+
+  @keyframes floatParticle {
+    0% {
+      transform: translateY(100vh) translateX(0px);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100px) translateX(100px);
+      opacity: 0;
+    }
+  }
+
+  /* Dashboard specific styles */
+  .dashboard-theme {
+    --background: var(--dashboard-bg);
+    --card: var(--dashboard-card);
+    --primary: var(--dashboard-primary);
+    --accent: var(--dashboard-accent);
+  }
+
+  /* Moving background for home page */
+  .home-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .home-background::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 20% 80%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, hsl(var(--accent) / 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, hsl(var(--secondary) / 0.1) 0%, transparent 50%);
+    animation: floatBackground 20s ease-in-out infinite;
+  }
+
+  .home-background::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      linear-gradient(45deg, transparent 40%, hsl(var(--primary) / 0.03) 50%, transparent 60%),
+      linear-gradient(-45deg, transparent 40%, hsl(var(--accent) / 0.02) 50%, transparent 60%);
+    animation: movePattern 25s linear infinite;
+  }
+
+  @keyframes floatBackground {
+    0%, 100% {
+      transform: translate(0px, 0px) rotate(0deg) scale(1);
+    }
+    33% {
+      transform: translate(30px, -30px) rotate(120deg) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) rotate(240deg) scale(0.9);
+    }
+  }
+
+  @keyframes movePattern {
+    0% {
+      transform: translateX(-100%) translateY(-100%);
+    }
+    100% {
+      transform: translateX(100%) translateY(100%);
+    }
+  }
+
+  /* Enhanced card animations */
+  .feature-card {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.1), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .feature-card:hover::before {
+    left: 100%;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 15px 40px hsl(var(--primary) / 0.2);
+  }
+}
