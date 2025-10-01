@@ -20,8 +20,7 @@ logger = logging.getLogger("resume-analyzer")
 # --------------------------
 # Load ML model & vectorizer
 # --------------------------
-model = None
-vectorizer = None
+model, vectorizer = None, None
 try:
     model = joblib.load("resume_svm_model.pkl")
     vectorizer = joblib.load("resume_vectorizer.pkl")
@@ -51,8 +50,7 @@ try:
     ginger = GingerIt()
     ginger_available = True
 except Exception:
-    ginger = None
-    ginger_available = False
+    ginger, ginger_available = None, False
 
 # --------------------------
 # Postgres connection
@@ -183,13 +181,12 @@ def analyze_resume():
             grammar_score = max(50, 100 - len(grammar_suggestions) * 2)
         except Exception as e:
             logger.warning("Grammar check skipped: %s", e)
-            grammar_suggestions = []
-            grammar_score = 90
 
     # Save to Postgres
     resume_id = str(uuid.uuid4())
     name = extract_name(resume_text)
     ats_score = int((len(matched) / (len(matched) + len(missing) + 1)) * 100)
+    overall_score = int((ats_score + grammar_score) // 2)
     qualifications = " | ".join([s for s in resume_keywords if s.lower() in ["btech", "mtech", "msc", "bsc", "mba"]])
 
     try:
@@ -204,7 +201,7 @@ def analyze_resume():
             resume_id,
             name,
             canonical_role,
-            ",".join(matched),   # store skills as CSV string
+            ",".join(matched),
             ats_score,
             grammar_score,
             qualifications,
@@ -212,32 +209,36 @@ def analyze_resume():
             prediction
         ))
         conn.commit()
-        logger.info("Saved resume_id=%s to Postgres", resume_id)
         cur.close()
         conn.close()
+        logger.info("Saved resume_id=%s to Postgres", resume_id)
     except Exception as e:
         logger.error("Failed to save resume: %s", e)
 
-    # ✅ return full data for frontend dashboard
+    # ✅ return full JSON for dashboard
     return jsonify({
         "resume_id": resume_id,
         "prediction": prediction,
         "job_role": canonical_role,
+        "overall_score": overall_score,
         "ats_score": ats_score,
         "grammar_score": grammar_score,
-        "grammar_suggestions": grammar_suggestions,
+        "keyword_match_percentage": int((len(matched) / (len(job_keywords) + 1)) * 100),
+        "sections_analysis": {
+            "experience": {"score": 70},   # stubbed
+            "skills": {"score": 80},       # stubbed
+            "education": {"score": 65},    # stubbed
+            "summary": {"score": 50}       # stubbed
+        },
         "matched_skills": matched,
         "missing_skills": missing,
         "keyword_analysis": {
+            "matched_keywords": len(matched),
             "total_keywords": len(job_keywords),
-            "matched_keywords": len(matched)
+            "keyword_density": round(len(matched) / (len(resume_keywords) + 1), 3)
         },
-        "sections_analysis": [
-            {"name": "Experience", "score": 75},
-            {"name": "Skills", "score": 70},
-            {"name": "Education", "score": 80},
-            {"name": "Summary", "score": 65}
-        ]
+        "grammar_suggestions": grammar_suggestions,
+        "readability_score": 80
     })
 
 
@@ -250,6 +251,7 @@ def get_resume_score(resume_id):
         row = cur.fetchone()
         cur.close()
         conn.close()
+
         if not row:
             return jsonify({"error": "Resume not found"}), 404
 
@@ -258,15 +260,10 @@ def get_resume_score(resume_id):
         overall_score = int((ats_score + grammar_score) // 2)
 
         return jsonify({
+            "resume_id": resume_id,
             "ats_score": ats_score,
             "grammar_score": grammar_score,
-            "overall_score": overall_score,
-            "sections_analysis": [
-                {"name": "Experience", "score": 75},
-                {"name": "Skills", "score": 70},
-                {"name": "Education", "score": 80},
-                {"name": "Summary", "score": 65}
-            ]
+            "overall_score": overall_score
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -281,13 +278,15 @@ def get_keywords(resume_id):
         row = cur.fetchone()
         cur.close()
         conn.close()
+
         if not row:
             return jsonify({"error": "Resume not found"}), 404
+
         skills = row["skills"].split(",") if row["skills"] else []
         return jsonify({
             "job_role": row["job_role"],
             "matched_skills": skills,
-            "missing_skills": [],  # frontend expects it
+            "missing_skills": [],
             "keyword_analysis": {
                 "total_keywords": len(skills),
                 "matched_keywords": len(skills)
@@ -306,8 +305,10 @@ def get_grammar(resume_id):
         row = cur.fetchone()
         cur.close()
         conn.close()
+
         if not row:
             return jsonify({"error": "Resume not found"}), 404
+
         return jsonify({
             "grammar_score": row["grammar_score"],
             "suggestions": []
