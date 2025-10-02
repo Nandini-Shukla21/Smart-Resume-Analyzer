@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import uuid
@@ -49,17 +50,20 @@ try:
     from gingerit.gingerit import GingerIt
     ginger = GingerIt()
     ginger_available = True
-except Exception:
+    logger.info("GingerIt available.")
+except Exception as e:
     ginger, ginger_available = None, False
+    logger.info("GingerIt not available: %s", e)
 
 # --------------------------
 # Postgres connection
 # --------------------------
 def get_db_connection():
+    # Update these credentials to match your local Postgres / pgAdmin settings
     return psycopg2.connect(
-        dbname="my_db",
-        user="postgres",
-        password="riya,123",
+        dbname="my_db",       # <-- change if needed
+        user="postgres",      # <-- change if needed
+        password="riya,123",  # <-- change if needed
         host="localhost",
         port="5432",
         cursor_factory=RealDictCursor
@@ -69,6 +73,7 @@ def get_db_connection():
 # Utility functions
 # --------------------------
 def extract_text_from_file(file) -> str:
+    """Save uploaded file to temp then extract text depending on extension."""
     resume_text = ""
     ext = os.path.splitext(file.filename)[1].lower()
     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
@@ -87,6 +92,7 @@ def extract_text_from_file(file) -> str:
             for para in doc.paragraphs:
                 resume_text += para.text + "\n"
         else:
+            # try reading as plain text
             with open(tmp_path, "r", encoding="utf-8", errors="ignore") as f:
                 resume_text = f.read()
     finally:
@@ -97,23 +103,37 @@ def extract_text_from_file(file) -> str:
 
     return resume_text
 
-
-def extract_keywords(text):
-    words = re.findall(r"\b[a-zA-Z]{3,}\b", text.lower())
-    return set(words)
-
-
-def canonicalize_job_role(incoming_role: str):
-    if not incoming_role:
-        return None
-    return VALID_ROLES.get(incoming_role.strip().lower())
-
-
-def extract_name(text):
-    lines = text.splitlines()
-    if lines:
-        return lines[0].strip()
+def extract_name(text: str) -> str:
+    """Very simple name extractor: first non-empty line."""
+    for line in text.splitlines():
+        s = line.strip()
+        if s:
+            # Return first meaningful line (could be improved with NLP)
+            return s
     return "Unknown"
+
+def normalize_text(text: str) -> str:
+    """Return normalized lowercase text for substring matching."""
+    return text.lower()
+
+def match_job_keywords(resume_text: str, job_keywords_list):
+    """
+    Match job keywords (single and multi-word phrases) against resume_text.
+    Returns (matched_list, missing_list). Matching is case-insensitive substring search.
+    """
+    resume_norm = normalize_text(resume_text)
+    matched = []
+    missing = []
+    for kw in job_keywords_list:
+        kw_normal = kw.strip().lower()
+        if not kw_normal:
+            continue
+        # Use simple substring containment — good for multi-word phrases too
+        if kw_normal in resume_norm:
+            matched.append(kw)
+        else:
+            missing.append(kw)
+    return matched, missing
 
 # --------------------------
 # Endpoints
@@ -122,15 +142,17 @@ def extract_name(text):
 def list_roles():
     return jsonify({"roles": list(JOB_KEYWORDS.keys())})
 
-
 @app.route('/analyze', methods=['POST'])
 def analyze_resume():
+    # Accept 'job_role' or legacy 'job_description' in form data
     file = request.files.get('resume')
     job_role_form = request.form.get('job_role')
     job_description_form = request.form.get('job_description')
 
     incoming_role = (job_role_form or job_description_form or "").strip()
-    canonical_role = canonicalize_job_role(incoming_role)
+    canonical_role = VALID_ROLES.get(incoming_role.lower())
+
+    logger.info("Analyze called. job_role provided: '%s' -> canonical: %s", incoming_role, canonical_role)
 
     if not file:
         return jsonify({"error": "No resume file uploaded"}), 400
@@ -141,15 +163,17 @@ def analyze_resume():
             "available_roles": list(JOB_KEYWORDS.keys())
         }), 400
 
+    # extract text
     try:
         resume_text = extract_text_from_file(file)
     except Exception as e:
+        logger.exception("Failed to parse resume")
         return jsonify({"error": f"Failed to parse resume: {str(e)}"}), 400
 
     if not resume_text.strip():
-        return jsonify({"error": "Empty resume text after parsing"}), 400
+        return jsonify({"error": "Empty resume text after parsing. Ensure PDF/DOCX is machine-readable (not scanned image)."}), 400
 
-    # ML prediction
+    # ML prediction (optional)
     prediction = "unknown"
     try:
         if model and vectorizer:
@@ -159,41 +183,54 @@ def analyze_resume():
                 prediction = pred[0]
     except Exception as e:
         logger.warning("Model prediction failed: %s", e)
+        prediction = "unknown"
 
-    # Keyword analysis
-    resume_keywords = extract_keywords(resume_text)
-    job_keywords = set([w.lower() for w in JOB_KEYWORDS.get(canonical_role, [])])
-    matched = sorted(list(resume_keywords & job_keywords))
-    missing = sorted(list(job_keywords - resume_keywords))
+    # Keyword analysis (multi-word-aware)
+    job_keywords_list = JOB_KEYWORDS.get(canonical_role, [])  # keep original casing from JSON
+    matched, missing = match_job_keywords(resume_text, job_keywords_list)
 
-    # Grammar (safe fallback)
+    # Grammar check (optional)
     grammar_suggestions = []
     grammar_score = 90
     if ginger_available and ginger:
         try:
-            grammar_result = ginger.parse(resume_text)
-            corrections = grammar_result.get("corrections") or []
+            res = ginger.parse(resume_text)
+            # gingerit returns corrections / matches in different shapes — be defensive
+            corrections = res.get("corrections") or res.get("matches") or []
+            grammar_suggestions = []
             for c in corrections:
-                grammar_suggestions.append({
-                    "text": c.get("text", ""),
-                    "suggestion": c.get("correct", "")
-                })
+                if isinstance(c, dict):
+                    txt = c.get("text") or c.get("sentence") or ""
+                    corr = c.get("correct") or c.get("replacements") or ""
+                    if isinstance(corr, list):
+                        corr = ", ".join(map(str, corr))
+                    grammar_suggestions.append({"text": txt, "suggestion": corr})
+                else:
+                    grammar_suggestions.append({"text": str(c), "suggestion": ""})
             grammar_score = max(50, 100 - len(grammar_suggestions) * 2)
         except Exception as e:
-            logger.warning("Grammar check skipped: %s", e)
+            logger.warning("Ginger parse failed: %s", e)
+            grammar_suggestions = []
+            grammar_score = 90
 
-    # Save to Postgres
+    # Compute simple scores
+    resume_keywords_set = set(re.findall(r"\b[a-zA-Z0-9+-]{2,}\b", resume_text.lower()))
+    matched_count = len(matched)
+    total_job_keywords = len(job_keywords_list)
+    ats_score = int((matched_count / (total_job_keywords + 1)) * 100)  # +1 to avoid div0
+    overall_score = int((ats_score + grammar_score) // 2)
+
+    # basic qualifications extraction
+    qualifications = " | ".join([s for s in resume_keywords_set if s.lower() in {"btech", "mtech", "msc", "bsc", "mba"}])
+
+    # persist to DB
     resume_id = str(uuid.uuid4())
     name = extract_name(resume_text)
-    ats_score = int((len(matched) / (len(matched) + len(missing) + 1)) * 100)
-    overall_score = int((ats_score + grammar_score) // 2)
-    qualifications = " | ".join([s for s in resume_keywords if s.lower() in ["btech", "mtech", "msc", "bsc", "mba"]])
-
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO resumes 
+            INSERT INTO resumes
             (resume_id, name, job_role, skills, ats_score, grammar_score, qualifications, resume_text, prediction)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (resume_id) DO NOTHING
@@ -201,7 +238,7 @@ def analyze_resume():
             resume_id,
             name,
             canonical_role,
-            ",".join(matched),
+            ",".join(matched),  # store matched skills as CSV
             ats_score,
             grammar_score,
             qualifications,
@@ -213,34 +250,34 @@ def analyze_resume():
         conn.close()
         logger.info("Saved resume_id=%s to Postgres", resume_id)
     except Exception as e:
-        logger.error("Failed to save resume: %s", e)
+        logger.exception("Failed to save resume to Postgres: %s", e)
 
-    # ✅ return full JSON for dashboard
-    return jsonify({
+    # Return the full shaped data the frontend expects (Home -> Dashboard)
+    response = {
         "resume_id": resume_id,
         "prediction": prediction,
         "job_role": canonical_role,
         "overall_score": overall_score,
         "ats_score": ats_score,
         "grammar_score": grammar_score,
-        "keyword_match_percentage": int((len(matched) / (len(job_keywords) + 1)) * 100),
-        "sections_analysis": {
-            "experience": {"score": 70},   # stubbed
-            "skills": {"score": 80},       # stubbed
-            "education": {"score": 65},    # stubbed
-            "summary": {"score": 50}       # stubbed
+        "keyword_match_percentage": int((matched_count / (total_job_keywords + 1)) * 100),
+        "sections_analysis": {   # stubbed section scores (frontend expects object)
+            "experience": {"score": 70},
+            "skills": {"score": 80},
+            "education": {"score": 65},
+            "summary": {"score": 50}
         },
         "matched_skills": matched,
         "missing_skills": missing,
         "keyword_analysis": {
-            "matched_keywords": len(matched),
-            "total_keywords": len(job_keywords),
-            "keyword_density": round(len(matched) / (len(resume_keywords) + 1), 3)
+            "matched_keywords": matched_count,
+            "total_keywords": total_job_keywords,
+            "keyword_density": round(matched_count / (len(resume_keywords_set) + 1), 3)
         },
         "grammar_suggestions": grammar_suggestions,
         "readability_score": 80
-    })
-
+    }
+    return jsonify(response)
 
 @app.route('/score/<resume_id>', methods=['GET'])
 def get_resume_score(resume_id):
@@ -251,7 +288,6 @@ def get_resume_score(resume_id):
         row = cur.fetchone()
         cur.close()
         conn.close()
-
         if not row:
             return jsonify({"error": "Resume not found"}), 404
 
@@ -260,41 +296,74 @@ def get_resume_score(resume_id):
         overall_score = int((ats_score + grammar_score) // 2)
 
         return jsonify({
-            "resume_id": resume_id,
             "ats_score": ats_score,
             "grammar_score": grammar_score,
-            "overall_score": overall_score
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/keywords/<resume_id>', methods=['GET'])
-def get_keywords(resume_id):
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT job_role, skills FROM resumes WHERE resume_id=%s", (resume_id,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-
-        if not row:
-            return jsonify({"error": "Resume not found"}), 404
-
-        skills = row["skills"].split(",") if row["skills"] else []
-        return jsonify({
-            "job_role": row["job_role"],
-            "matched_skills": skills,
-            "missing_skills": [],
-            "keyword_analysis": {
-                "total_keywords": len(skills),
-                "matched_keywords": len(skills)
+            "overall_score": overall_score,
+            "sections_analysis": {
+                "experience": {"score": 70},
+                "skills": {"score": 80},
+                "education": {"score": 65},
+                "summary": {"score": 50}
             }
         })
     except Exception as e:
+        logger.exception("Error in get_resume_score")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/keywords/<resume_id>', methods=['GET'])
+def get_keywords(resume_id):
+    """
+    Returns keyword-related data for given resume_id.
+    Optional query param: job_role to compute vs different role.
+    """
+    job_role_q = request.args.get("job_role", "").strip()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT job_role, skills, resume_text FROM resumes WHERE resume_id=%s", (resume_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row:
+            return jsonify({"error": "Resume not found"}), 404
+
+        # Use stored skills if no override role; else compute against provided job_role
+        if job_role_q:
+            canonical = VALID_ROLES.get(job_role_q.lower())
+            if not canonical:
+                return jsonify({"error": "Invalid job_role query param", "available_roles": list(JOB_KEYWORDS.keys())}), 400
+            job_keywords_list = JOB_KEYWORDS.get(canonical, [])
+            matched, missing = match_job_keywords(row["resume_text"], job_keywords_list)
+            total_keywords = len(job_keywords_list)
+            matched_count = len(matched)
+            density = round(matched_count / (total_keywords + 1), 2)
+            return jsonify({
+                "total_keywords": total_keywords,
+                "matched_keywords": matched_count,
+                "matched": matched,
+                "missing": missing,
+                "keyword_density": density,
+                "job_role": canonical
+            })
+
+        # default: use stored skills field (CSV)
+        stored_skills = row.get("skills") or ""
+        skills_list = stored_skills.split(",") if stored_skills else []
+        total_keywords = len(skills_list)
+        matched_count = len(skills_list)
+        density = round(matched_count / (total_keywords + 1), 2)
+
+        return jsonify({
+            "total_keywords": total_keywords,
+            "matched_keywords": matched_count,
+            "matched": skills_list,
+            "missing": [],
+            "keyword_density": density,
+            "job_role": row.get("job_role")
+        })
+    except Exception as e:
+        logger.exception("Error in get_keywords")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/grammar/<resume_id>', methods=['GET'])
 def get_grammar(resume_id):
@@ -305,17 +374,16 @@ def get_grammar(resume_id):
         row = cur.fetchone()
         cur.close()
         conn.close()
-
         if not row:
             return jsonify({"error": "Resume not found"}), 404
 
         return jsonify({
-            "grammar_score": row["grammar_score"],
+            "score": row["grammar_score"],
             "suggestions": []
         })
     except Exception as e:
+        logger.exception("Error in get_grammar")
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -325,7 +393,6 @@ def health():
         "vectorizer_loaded": vectorizer is not None,
         "ginger_available": ginger_available
     })
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
