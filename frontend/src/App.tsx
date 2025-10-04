@@ -12,6 +12,7 @@ import ProtectedRoute from "@/components/ProtectedRoute"; // ✅ import your pro
 
 const queryClient = new QueryClient();
 
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
