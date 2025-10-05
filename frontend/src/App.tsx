@@ -8,7 +8,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import ProtectedRoute from "@/components/ProtectedRoute"; // ✅ import your protected route
+import ProtectedRoute from "@/components/ProtectedRoute"; 
 
 const queryClient = new QueryClient();
 
