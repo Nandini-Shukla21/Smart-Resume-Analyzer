@@ -155,7 +155,6 @@ All colors MUST be HSL. Dark mode like Skitbit, Light mode like Wavelength, Dash
   }
 
   /* Animated Background Elements */
-  
   body::before {
     content: '';
     position: fixed;
