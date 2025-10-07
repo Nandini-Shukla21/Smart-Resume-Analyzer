@@ -16,7 +16,6 @@
     "noUnusedLocals": false,
     "strictNullChecks": false,
 
-    // ✅ Add these two
     "resolveJsonModule": true,
     "esModuleInterop": true
   }
