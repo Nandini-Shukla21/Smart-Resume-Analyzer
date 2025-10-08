@@ -226,6 +226,7 @@ const Dashboard = () => {
               </motion.div>
 
               {/* Quick Stats */}
+              
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}>
                 <GlassCard>
                   <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
