@@ -245,6 +245,7 @@ const Home = () => {
           </motion.div>
 
           {/* CTA Section */}
+          
           <motion.div
             className="text-center mt-16"
             initial={{ opacity: 0 }}
