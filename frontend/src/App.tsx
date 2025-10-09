@@ -22,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           
           {/* ✅ Wrap dashboard in ProtectedRoute */}
+          
           <Route
             path="/dashboard"
             element={
