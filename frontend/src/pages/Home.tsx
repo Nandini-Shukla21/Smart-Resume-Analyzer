@@ -216,6 +216,7 @@ const Home = () => {
           </motion.div>
 
           {/* Features Grid */}
+          
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             initial={{ opacity: 0, y: 30 }}
