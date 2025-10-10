@@ -168,8 +168,11 @@ We ❤️ contributions!
 ## 💌 Contact
 
 👩‍💻 **Author:** Nandini Shukla
+
 📧 **Email:** [nandinishukla023@gmail.com]
+
 🌐 **GitHub:** [https://github.com/Nandini-Shukla21]
+
 💼 **LinkedIn:** https://www.linkedin.com/in/nandinishukla023/
 ---
 
