@@ -192,6 +192,7 @@ const Home = () => {
               </div>
 
               {/* Resume Upload */}
+              
               <FileUpload
                 onFileSelect={handleFileUpload}
                 placeholder={
