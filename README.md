@@ -167,13 +167,13 @@ We ❤️ contributions!
 
 ## 💌 Contact
 
-👩‍💻 **Author:** Nandini Shukla
+👩‍💻 **Author:**  Nandini Shukla
 
 📧 **Email:** [nandinishukla023@gmail.com]
 
 🌐 **GitHub:** [https://github.com/Nandini-Shukla21]
 
-💼 **LinkedIn:** https://www.linkedin.com/in/nandinishukla023/
+💼 **LinkedIn:** [https://www.linkedin.com/in/nandinishukla023/]
 ---
 
 ## 🌟 Support
