@@ -51,6 +51,7 @@ class ApiService {
     });
 
     // DEBUG: log raw text
+    
     const text = await response.text();
     console.log("Backend /analyze response:", text);
 
