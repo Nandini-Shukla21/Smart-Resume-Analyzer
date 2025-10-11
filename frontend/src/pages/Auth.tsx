@@ -53,6 +53,7 @@ const Auth = () => {
       }}
     >
       {/* Floating Background Elements */}
+
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-primary/20 to-accent/10"
@@ -75,6 +76,7 @@ const Auth = () => {
 
       <div className="min-h-screen flex items-center justify-center p-4 pt-24 relative z-10">
         <div className="max-w-md w-full">
+          
           {/* Back Button */}
           <motion.div
             className="mb-6"
