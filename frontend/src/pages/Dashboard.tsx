@@ -164,6 +164,7 @@ const Dashboard = () => {
 
             {/* Right Column */}
             <div className="space-y-6">
+              
               {/* Keyword Distribution */}
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.4 }}>
                 <GlassCard className="hover:shadow-glass-lg transition-all duration-300">
