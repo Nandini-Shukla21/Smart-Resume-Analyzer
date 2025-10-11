@@ -387,6 +387,7 @@ def get_grammar(resume_id):
 
 @app.route('/health', methods=['GET'])
 def health():
+    
     return jsonify({
         "status": "Backend is running 🚀",
         "model_loaded": model is not None,
