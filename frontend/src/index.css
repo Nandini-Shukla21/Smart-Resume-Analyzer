@@ -134,6 +134,7 @@ All colors MUST be HSL. Dark mode like Skitbit, Light mode like Wavelength, Dash
     --gradient-dashboard: linear-gradient(135deg, hsl(210 60% 5%), hsl(220 50% 8%));
     
     /* Glassmorphism Effects */
+    
     --glass-bg: hsl(255 100% 100% / 0.6);
     --glass-border: hsl(240 30% 90% / 0.5);
     --glass-shadow: 0 8px 32px hsl(250 100% 65% / 0.1);
