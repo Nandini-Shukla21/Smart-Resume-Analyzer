@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 // Replace with your Firebase config (from Firebase Console)
+
 const firebaseConfig = {
   apiKey: "AIzaSyCW3MqG4nZA7ZYk4BXKxzFjnYfnKlqyU30",
   authDomain: "ai-resume-analyzer-e01e1.firebaseapp.com",
