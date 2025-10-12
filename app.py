@@ -328,6 +328,7 @@ def get_keywords(resume_id):
             return jsonify({"error": "Resume not found"}), 404
 
         # Use stored skills if no override role; else compute against provided job_role
+        
         if job_role_q:
             canonical = VALID_ROLES.get(job_role_q.lower())
             if not canonical:
@@ -347,6 +348,7 @@ def get_keywords(resume_id):
             })
 
         # default: use stored skills field (CSV)
+
         stored_skills = row.get("skills") or ""
         skills_list = stored_skills.split(",") if stored_skills else []
         total_keywords = len(skills_list)
