@@ -33,7 +33,9 @@ const App = () => (
           />
 
           <Route path="/auth" element={<Auth />} />
+          
           {/* Catch all */}
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
