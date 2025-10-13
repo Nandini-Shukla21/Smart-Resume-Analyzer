@@ -39,6 +39,7 @@ class ApiService {
   }
 
   // ✅ Upload and analyze resume
+  
  async analyzeResume(file, jobRole = null) {
   const formData = new FormData();
   formData.append("resume", file);
