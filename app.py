@@ -253,6 +253,7 @@ def analyze_resume():
         logger.exception("Failed to save resume to Postgres: %s", e)
 
     # Return the full shaped data the frontend expects (Home -> Dashboard)
+    
     response = {
         "resume_id": resume_id,
         "prediction": prediction,
