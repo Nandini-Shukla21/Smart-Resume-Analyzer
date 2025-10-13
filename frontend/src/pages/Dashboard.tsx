@@ -116,6 +116,7 @@ const Dashboard = () => {
             {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
               {/* Section Scores Chart */}
+              
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
                 <GlassCard className="hover:shadow-glass-lg transition-all duration-300">
                   <div className="flex items-center gap-2 mb-6">
