@@ -127,6 +127,7 @@ const Home = () => {
 
       <div className="px-4 md:px-8 pt-8">
         <div className="max-w-6xl mx-auto">
+          
           {/* Hero Section */}
           <motion.div
             className="text-center mb-16"
