@@ -209,6 +209,7 @@ All colors MUST be HSL. Dark mode like Skitbit, Light mode like Wavelength, Dash
 }
 
 @layer components {
+  
   /* Glassmorphism Card Component */
   .glass-card {
     @apply backdrop-blur-xl bg-glass border border-glass-border rounded-2xl;
