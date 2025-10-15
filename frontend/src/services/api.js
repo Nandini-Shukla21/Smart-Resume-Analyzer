@@ -69,11 +69,13 @@ class ApiService {
 
 
   // ✅ Get resume scoring breakdown
+
   async getResumeScore(resumeId) {
     return this.getRequest(`/score/${resumeId}`);
   }
 
   // ✅ Get keyword analysis
+  
   async getKeywordAnalysis(resumeId, jobRole = null) {
     const endpoint = jobRole
       ? `/keywords/${resumeId}?job_role=${encodeURIComponent(jobRole)}` // FIXED
