@@ -164,6 +164,7 @@ def analyze_resume():
         }), 400
 
     # extract text
+
     try:
         resume_text = extract_text_from_file(file)
     except Exception as e:
@@ -174,6 +175,7 @@ def analyze_resume():
         return jsonify({"error": "Empty resume text after parsing. Ensure PDF/DOCX is machine-readable (not scanned image)."}), 400
 
     # ML prediction (optional)
+    
     prediction = "unknown"
     try:
         if model and vectorizer:
