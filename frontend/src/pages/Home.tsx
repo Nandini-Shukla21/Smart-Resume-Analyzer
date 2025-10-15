@@ -129,6 +129,7 @@ const Home = () => {
         <div className="max-w-6xl mx-auto">
           
           {/* Hero Section */}
+          
           <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 30 }}
