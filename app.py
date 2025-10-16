@@ -188,6 +188,7 @@ def analyze_resume():
         prediction = "unknown"
 
     # Keyword analysis (multi-word-aware)
+    
     job_keywords_list = JOB_KEYWORDS.get(canonical_role, [])  # keep original casing from JSON
     matched, missing = match_job_keywords(resume_text, job_keywords_list)
 
