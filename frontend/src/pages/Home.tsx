@@ -82,6 +82,7 @@ const Home = () => {
       };
 
       // ✅ Navigate to dashboard with shaped data
+      
       navigate("/dashboard", { state: { analysisData } });
     } catch (error) {
       console.error("Analysis failed:", error);
