@@ -193,6 +193,7 @@ def analyze_resume():
     matched, missing = match_job_keywords(resume_text, job_keywords_list)
 
     # Grammar check (optional)
+    
     grammar_suggestions = []
     grammar_score = 90
     if ginger_available and ginger:
