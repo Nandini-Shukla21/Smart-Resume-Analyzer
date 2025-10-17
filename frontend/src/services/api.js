@@ -84,6 +84,7 @@ class ApiService {
   }
 
   // ✅ Get grammar and readability analysis
+  
   async getGrammarAnalysis(resumeId) {
     return this.getRequest(`/grammar/${resumeId}`);
   }
