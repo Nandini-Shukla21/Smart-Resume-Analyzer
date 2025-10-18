@@ -78,6 +78,7 @@ const Home = () => {
         },
 
         // Readability dummy
+        
         readability_score: 80,
       };
 
