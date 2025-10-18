@@ -90,6 +90,7 @@ class ApiService {
   }
 
   // ✅ Compare resume with job role
+  
   async compareWithJob(resumeId, jobRole) {
     return this.postRequest(`/compare/${resumeId}`, { job_role: jobRole }); // FIXED
   }
