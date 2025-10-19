@@ -70,6 +70,7 @@ const Home = () => {
         })),
 
         // Sections
+        
         sections_analysis: scoreData.sections_analysis || {
           experience: { score: 80, suggestions: [] },
           skills: { score: 75, suggestions: [] },
