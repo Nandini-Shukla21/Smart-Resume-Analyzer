@@ -199,6 +199,7 @@ def analyze_resume():
     if ginger_available and ginger:
         try:
             res = ginger.parse(resume_text)
+            
             # gingerit returns corrections / matches in different shapes — be defensive
             
             corrections = res.get("corrections") or res.get("matches") or []
