@@ -55,6 +55,7 @@ const Home = () => {
             : 0,
 
         // Skills & Keywords
+        
         matched_skills: keywordData.matched,
         missing_skills: keywordData.missing,
         keyword_analysis: {
