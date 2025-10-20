@@ -102,6 +102,7 @@ class ApiService {
   }
 
   // ✅ Mock data for UI testing
+  
   getMockAnalysisData() {
     return {
       overall_score: 78,
