@@ -220,6 +220,7 @@ def analyze_resume():
             grammar_score = 90
 
     # Compute simple scores
+    
     resume_keywords_set = set(re.findall(r"\b[a-zA-Z0-9+-]{2,}\b", resume_text.lower()))
     matched_count = len(matched)
     total_job_keywords = len(job_keywords_list)
