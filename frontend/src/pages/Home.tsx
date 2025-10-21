@@ -65,6 +65,7 @@ const Home = () => {
         },
 
         // Grammar
+        
         grammar_suggestions: grammarData.suggestions.map((s: any) => ({
           text: s.text,
           suggestion: s.suggestion || "",
