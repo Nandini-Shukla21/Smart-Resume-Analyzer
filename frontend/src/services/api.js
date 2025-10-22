@@ -9,6 +9,7 @@ class ApiService {
   }
 
   // Generic GET (for JSON responses)
+  
   async getRequest(endpoint) {
     const url = `${this.baseURL}${endpoint}`;
     try {
