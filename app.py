@@ -228,6 +228,7 @@ def analyze_resume():
     overall_score = int((ats_score + grammar_score) // 2)
 
     # basic qualifications extraction
+    
     qualifications = " | ".join([s for s in resume_keywords_set if s.lower() in {"btech", "mtech", "msc", "bsc", "mba"}])
 
     # persist to DB
