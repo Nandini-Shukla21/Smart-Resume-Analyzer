@@ -44,6 +44,7 @@ const Home = () => {
         job_role: jobRole,
 
         // Scores
+        
         overall_score: scoreData.overall_score,
         ats_score: scoreData.ats_score,
         grammar_score: grammarData.score,
