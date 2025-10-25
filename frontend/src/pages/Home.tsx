@@ -28,6 +28,7 @@ const Home = () => {
     try {
       
       // ✅ Send only role name
+      
       const analyzeRes = await apiService.analyzeResume(file, jobRole);
       const resumeId = analyzeRes.resume_id;
 
