@@ -144,6 +144,7 @@ def list_roles():
 
 @app.route('/analyze', methods=['POST'])
 def analyze_resume():
+    
     # Accept 'job_role' or legacy 'job_description' in form data
     
     file = request.files.get('resume')
