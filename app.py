@@ -138,6 +138,7 @@ def match_job_keywords(resume_text: str, job_keywords_list):
 # --------------------------
 # Endpoints
 # --------------------------
+
 @app.route("/roles", methods=["GET"])
 def list_roles():
     return jsonify({"roles": list(JOB_KEYWORDS.keys())})
